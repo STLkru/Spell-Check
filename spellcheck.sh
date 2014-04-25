@@ -4,21 +4,19 @@
 # In order to run the script, "ispell" needs to be installed
 # install ispell: sudo apt-get install ispell/hunspell
 
-
+changerequests="/tmp/$0.$$.sed"
 
 checkSpelling()
 {
-  echo "IN FUNCTION"
-  echo ""; echo "${boldon}Misspelled word ${word}:${boldoff}"
-  #grep -n $word $filename | sed -e 's/^/   /' -e "s/$word/$boldon$word$boldoff/g" # this line obtains line number and displays whole line of missing word
-  echo -n "i)gnore, q)uit, or type replacement: "
-  read fix
+  echo "Misspelled word $word"  
+  read -p "$word is mispelled. Press "Enter" to ignore, "q" to quit, or type replacement here: " correction
   
-  if [ "$fix" = "q" -o "$fix" = "quit" ] ; then
-    echo "Exiting without applying any fixes."; exit 0
-  elif [ "$fix" = "i" -o -z "$fix" ] ; then
-    echo "Ignored misspelled word $word."    
-  else echo "s/$word/$fix/g" >> $changerequests
+  if [[ "$correction" = "q" ]] ; then
+    echo "Exiting without applying any fixes."; 
+    exit 0
+  elif [[ "$correction" = "" ]] ; then
+    echo "Ignored misspelled word $word."
+  else echo "s/$word/$correction/g" >> $changerequests
   fi 
 }
 
@@ -33,17 +31,23 @@ then
 fi
 
 touch $changerequests #create new temp file?
-errors="$($spell < $filename | tee $tempfile | wc -l | sed 's/[^[:digit:]]//g')" #outputs spelling errors in tempfile
-if [ $errors -eq 0 ] #if there are no spelling errors, let the user know
+
+
+
+array=($(hunspell -l < $filename | sed 's/:.*//')) #create an array of misspelled words
+if [ ${#array[@]} == 0 ] #if the length of the misspelled array is 0, exit
 then 
-  echo "There are no spelling errors in $filename."
+  echo "$filename has no errors!"
   exit 0
-else
-  for word in $(cat $tempfile) #go through all misspelled words in tempfile
+else #if array is not empty
+  echo ""
+  for word in ${array[@]}; #go through all misspelled words in array
   do
     checkSpelling $word $filename
   done
 fi
+
+
 
 if [ $(wc -l < $changerequests) -gt 0 ] ; then
   sed -f $changerequests $filename > $filename.new
