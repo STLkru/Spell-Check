@@ -2,22 +2,26 @@
 # Spell checks words in a text file, prompts user to fix or ignore misspelled words, and updates changes as indicated.
 
 count=0
+bold=`tput bold`
+normal=`tput sgr0`
 
 replaceWord()
 {
-  echo ""
-  echo "Misspelled word: $word"  
-  grep -n $word $filename # display words in the line context
+  echo "" 
+  echo "Misspelled word: ${bold}$word${normal}"  
+  grep -n $word $filename # display all instances of the word in the context of the text file
   read -p "Press "Enter" to ignore, "q" to quit, or type replacement here: " correction
-  if [[ "$correction" = "q" ]] ; then
-    echo "Exiting... MADE $count WORD CHANGE(S)."; 
+  if [ "$correction" = "q" ] || [ "$correction" = "quit" ] # quits, but saves changes that were already made
+  then  
     echo ""
+    echo "Exiting... CHANGED $count WORD(S)."; 
     exit 0
-  elif [[ "$correction" = "" ]] ; then
+  elif [ "$correction" = "" ]
+  then
     echo "Ignored misspelled word $word..."
   else 
-    sed -i "s/$word/$correction/g" $filename #replace word in file at all instances
-    let count=$((count+1))
+    sed -i "s/$word/$correction/g" $filename # replace word in file at all instances
+    let count=$((count+1)) # increment number of changes made
   fi   
 }
 
@@ -31,26 +35,26 @@ fi
 echo ""
 echo -n "Enter name of file that you want spell checked: "
 read filename
-if [ ! -r $filename ] # If file is not readable, exit
+if [ ! -r $filename ] # if file is not readable, exit
 then 
   echo "ERROR: Cannot read file $filename"; echo ""; exit 1
 fi
 
-#create an array of misspelled words, using the output from "hunspell -l"
-array=($(hunspell -l < $filename | sed 's/:.*//' | sort -u)) #add only unique misspelled words, no repeats
-if [ ${#array[@]} == 0 ] #if the length of the misspelled array is 0, exit
+# create an array of misspelled words, using the output from "hunspell -l"
+array=($(hunspell -l < $filename | sed 's/:.*//' | sort -u)) # sort by unique misspelled words, no repeats, but includes capitals
+if [ ${#array[@]} == 0 ] # if the length of the misspelled array is 0, there are no spelling errors
 then 
   echo "$filename has no spelling errors!"
   echo ""
   exit 0
-else #if array is not empty
+else # if array is not empty
   cp "$filename" "$filename.bak" # create backup of original file, with .bak extension 
-  for word in ${array[@]}; #go through all misspelled words in array
+  for word in ${array[@]}; # loop through all misspelled words in array
   do
-    replaceWord $word $filename
+    replaceWord $word $filename # function that prompts user to make changes
   done
 fi
 
 echo ""
-echo "MADE $count WORD CHANGE(S)."
+echo "CHANGED $count WORD(S)."
 exit 0
