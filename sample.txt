@@ -1,0 +1,5 @@
+This is a sample text file to test mizpelled words!
+
+Studentz in this one-hour course will learn how to use Unix command-line tools to solve difficultt data-processing problems quickly and easily. 
+We will also discuss the design principles tha underlie this approach to programming. 
+The design principles lead to good software engineering practice: modularit, simplicity, portability, reusabilit.
